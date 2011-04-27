@@ -5,6 +5,8 @@
 
 import gtk
 
+import config
+
 from globaldefs import *
 
 class MainWindow(gtk.Window):
@@ -98,7 +100,11 @@ class MainWindow(gtk.Window):
         """
         Called when the user issues a request for a new game.
         """
-        pass
+        cfg = config.Config(self, TITLE)
+        cfg.display()
+        r = cfg.get_settings()
+        cfg.destroy()
+        print r
 
     def __on_about(self, widget, data=None):
         """
