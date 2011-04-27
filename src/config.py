@@ -36,16 +36,54 @@ class Config(object):
         """
         _topVBox = gtk.VBox()
         self._build_IO_gui(_topVBox)
-#        _checkHBox = gtk.HBox()
-#        self._build_action_gui(_checkHBox)
-#        self._build_learning_gui(_checkHBox)
-#        _topVBox.pack_start(_checkHBox, False, False, 5)
+        _checkHBox = gtk.HBox()
+        self._build_topology_gui(_checkHBox)
+        self._build_activation_gui(_checkHBox)
+        self._build_extra_gui(_checkHBox)
+        _topVBox.pack_start(_checkHBox, False, False, 5)
         self._d.vbox.add(_topVBox)
+
+    def _build_topology_gui(self, _checkHBox):
+        """
+        Builds the GUI allowing to tweak network's topology.
+
+        _checkHBox    HBox holding the widgets built by this function
+        """
+        _aVBox = self._build_compund_gui_box(_checkHBox, "Topology:")
+        self._order = self._build_labeled_input('N: ', _aVBox)
+        self._h1 = self._build_labeled_input('h1:', _aVBox)
+        self._h2 = self._build_labeled_input('h2:', _aVBox)
+
+    def _build_activation_gui(self, _checkHBox):
+        """
+        Builds the GUI allowing to select between activation functions.
+        """
+        _aVBox = self._build_compund_gui_box(_checkHBox, "Activations:")
+        self._log = gtk.RadioButton(None, 'Simple logistic')
+        self._2log = gtk.RadioButton(self._log, 'Logistic in [-1, 1]')
+        self._tanh = gtk.RadioButton(self._log, 'Tanh')
+        _aVBox.add(self._log)
+        _aVBox.add(self._2log)
+        _aVBox.add(self._tanh)
+
+    def _build_extra_gui(self, _checkHBox):
+        """
+        Builds the GUI part for extra options.
+        """
+        _aVBox = self._build_compund_gui_box(_checkHBox, "Extra:")
+        self._minCounter = self._build_counter('min weight:', -1, 1, _aVBox)
+        self._maxCounter = self._build_counter('max weight:', -1, 1, _aVBox)
+        self._minCounter.get_adjustment().set_value(-1)
+        self._maxCounter.get_adjustment().set_value(1)
+        self._momentum = gtk.CheckButton('Use momentum')
+        self._recurrent = gtk.CheckButton('Recurent network')
+        _aVBox.add(self._momentum)
+        _aVBox.add(self._recurrent)
 
     def _build_IO_gui(self, _topVBox):
         """
         Builds the GUI for the UI actions: what file to read and how many
-        steps to take on each learning iteration.
+        steps to learn.
 
         _topVBox    VBox holding the widgets built by this function
         """
@@ -55,6 +93,61 @@ class Config(object):
         _fileHBox.pack_start(_fileLabel, False, False, 5)
         self._fileChoose = gtk.FileChooserButton("Select input filename")
         _fileHBox.pack_start(self._fileChoose, True, True, 5)
+        self._rCounter = self._build_counter('Max steps:', 1000, 3000, _fileHBox, 100, 0)
+
+    def _build_compund_gui_box(self, _checkHBox, frame):
+        """
+        Builds the VBox used to construct a compund widget and adds it to the
+        parent frame, adding that frame to the parent container.
+        """
+        _frame = gtk.Frame(frame)
+        _checkHBox.pack_start(_frame, True, True, 5)
+        _aVBox = gtk.VBox()
+        _frame.add(_aVBox)
+        return _aVBox
+
+
+    def _build_labeled_input(self, text, parent):
+        """
+        Builds a Edit TextBox with a Label to input one parameter.
+
+        text    text explaining what the value stands for
+        parent  parent widget
+        """
+        _hBox = gtk.HBox()
+        _label = gtk.Label(text)
+        _hBox.pack_start(_label, False, False, 5)
+        w = gtk.Entry()
+        w.set_width_chars(3)
+        _hBox.pack_start(w, True, True, 5)
+        parent.add(_hBox)
+        return w
+
+    def _build_counter(self, text, minv, maxv, parent, incr=.05, digits=2, enabled=True):
+        """
+        Builds a SpinButton used to represent a fixed value in a fixed
+        interval (for values of parameters).
+
+        text        text explaining what the value stands for
+        minv        minimal value for the counter
+        maxv        maximal value for the counter
+        parent      parent box for this counter
+        incr        increment value for the spin button
+        digits      decimal places to show in the button
+        enabled     is the SpinButton available when it is built?
+        return      the SpinButton built
+        """
+        _hBox = gtk.HBox()
+        _label = gtk.Label(text)
+        _hBox.pack_start(_label, False, False, 5)
+        sb = gtk.SpinButton(gtk.Adjustment(step_incr=incr), digits=digits)
+        sb.set_numeric(True)
+        sb.set_wrap(True)
+        sb.set_range(minv, maxv)
+        sb.set_sensitive(enabled)
+        _hBox.pack_start(sb, True, True, 5)
+        parent.add(_hBox)
+        return sb
 
     def display(self):
         """
@@ -69,17 +162,17 @@ class Config(object):
 
         # Try to read the file provided
         if not self._read(self._fileChoose.get_filename()):
-            md = gtk.MessageDialog(self._d, gtk.DIALOG_DESTROY_WITH_PARENT,
-                    gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE, "Invalid file!")
-            md.run()
-            md.destroy()
+            self._report(gtk.MESSAGE_ERROR, "Invalid file!")
             # Try again, hopefully we won't recourse too many times.
             return self.display()
 
         # If everything is ok here, read info from the other widgets,
-        # complete the dictionary and return (the other widgets always
-        # return good values).
-        self._complete_config()
+        # complete the dictionary and return
+        if not self._complete_config():
+            return self.display()
+
+        # Check read values for consistency
+        # if in error, display again
 
     def get_settings(self):
         """
@@ -108,41 +201,68 @@ class Config(object):
         if not fName:
             return False
 
-#        try:
-#            with open(fName) as f:
-#                d = f.readline()
-#                p = d.split()
-#                if len(p) != 2:
-#                    return False
-#                self._configDict['N'] = int(p[0])
-#                self._configDict['M'] = int(p[1])
-#                d = f.readline()
-#                self._configDict['D'] = int(d)
-#                d = f.readline()
-#                p = d.split()
-#                if len(p) != 2:
-#                    return False
-#                self._configDict['xs'] = int(p[0])
-#                self._configDict['ys'] = int(p[1])
-#                d = f.readline()
-#                self._configDict['d1'] = int(d)
-#                d = f.readline()
-#                self._configDict['d2'] = int(d)
-#        except Exception as e:
-#            return False
+        try:
+            with open(fName) as f:
+                d = f.readline()
+                p = d.split()
+                self._configDict['data'] = map(float, p)
+                self._configDict['N'] = len(self._configDict['data'])
+        except Exception as e:
+            return False
         return True
 
     def _complete_config(self):
         """
         Reads data from the dialog's widgets to complete the _configDict.
         """
-#        self._configDict['greedy?'] = b = self._greedyAction.get_active()
-#        if b:
-#            self._configDict['ε/τ'] = self._eCounter.get_value()
-#        else:
-#            self._configDict['ε/τ'] = self._tCounter.get_value()
-#        self._configDict['Q?'] = self._ql.get_active()
-#        self._configDict['α'] = self._aCounter.get_value()
-#        self._configDict['γ'] = self._gCounter.get_value()
-#        self._configDict['runs'] = self._rCounter.get_value()
+        self._configDict['runs'] = self._rCounter.get_value()
+
+        if not self._read_int_text_widget('N', self._order):
+            return False
+        if not self._read_int_text_widget('h1', self._h1):
+            return False
+        if not self._read_int_text_widget('h2', self._h2):
+            return False
+
+        if self._log.get_active():
+            self._configDict['activation'] = 'log'
+        elif self._2log.get_active():
+            self._configDict['activation'] = '2log'
+        else:
+            self._configDict['activation'] = 'tanh'
+
+        self._configDict['minW'] = self._minCounter.get_value()
+        self._configDict['maxW'] = self._maxCounter.get_value()
+        self._configDict['momentum'] = self._momentum.get_active()
+        self._configDict['recurrent'] = self._recurrent.get_active()
+
+        if self._configDict['minW'] > self._configDict['maxW'] - .1:
+            self._report(gtk.MESSAGE_WARNING, "Invalid interval for weights, ignored")
+            self._configDict['minW'] = -1
+            self._configDict['maxW'] = 1
+
+        if self._configDict['h1'] == 0 and self._configDict['h2'] != 0:
+            self._report(gtk.MESSAGE_WARNING, "Still a network with a single layer")
+
+        return True
+
+    def _read_int_text_widget(self, cfgName, widget):
+        """
+        Reads data from a text widget and tries to convert it to integer.
+        """
+        try:
+            self._configDict[cfgName] = int(widget.get_text())
+        except Exception as e:
+            self._report(gtk.MESSAGE_ERROR, "Invalid option for {0}!".format(cfgName))
+            return False
+        return True
+
+    def _report(self, msg_type, text):
+        """
+        Reports an error or a warning.
+        """
+        md = gtk.MessageDialog(self._d, gtk.DIALOG_DESTROY_WITH_PARENT,
+                msg_type, gtk.BUTTONS_CLOSE, text)
+        md.run()
+        md.destroy()
 
