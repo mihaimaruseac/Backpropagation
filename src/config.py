@@ -246,6 +246,7 @@ class Config(object):
 
         if self._configDict['N'] < 2:
             self._report(gtk.MESSAGE_ERROR, "Order should be at least 2")
+            return False
 
         return True
 

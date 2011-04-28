@@ -6,6 +6,7 @@
 import gtk
 
 import config
+import network
 
 from globaldefs import *
 
@@ -58,17 +59,10 @@ class MainWindow(gtk.Window):
                 "Starts a new prediction", self.__on_new)
         _toolbar.insert(_btnNew, -1)
 
-#        _toolbar.insert(gtk.SeparatorToolItem(), -1)
-#        self._build_simulation_buttons(_toolbar)
-#        _toolbar.insert(gtk.SeparatorToolItem(), -1)
-#        self._build_simulation_informations(_toolbar)
-#        _toolbar.insert(gtk.SeparatorToolItem(), -1)
-
         _btnAbout = self._build_toolbar_button(gtk.STOCK_ABOUT, "About",
                 "About this program", self.__on_about)
         _toolbar.insert(_btnAbout, -1)
 
-#        self._switch_playstep_buttons(False)
         return _toolbar
 
     def _build_toolbar_button(self, img_stock, label, tooltip, callback):
@@ -104,7 +98,11 @@ class MainWindow(gtk.Window):
         cfg.display()
         r = cfg.get_settings()
         cfg.destroy()
-        print r
+        if r:
+            nw = network.Network(r)
+            r = nw.learn()
+            print "Result was {0}".format(r)
+            # TODO: interpret result of learning
 
     def __on_about(self, widget, data=None):
         """
