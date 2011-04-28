@@ -215,7 +215,7 @@ class Config(object):
         """
         Reads data from the dialog's widgets to complete the _configDict.
         """
-        self._configDict['runs'] = self._rCounter.get_value()
+        self._configDict['runs'] = int(self._rCounter.get_value())
 
         if not self._read_int_text_widget('N', self._order):
             return False

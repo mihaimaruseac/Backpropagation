@@ -4,6 +4,7 @@
 #
 
 import math
+from threading import Thread
 
 import normalizer
 
@@ -44,7 +45,7 @@ def dth(x):
     t = th(x)
     return 1 - t * t
 
-class Network(object):
+class Network(Thread):
     """
     Represents an entire neural network.
 
@@ -53,19 +54,42 @@ class Network(object):
     problem). All other methods are auxiliary.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, gui):
         """
         Builds the network.
 
         config  User configuration.
         """
+        Thread.__init__(self)
+        self._gui = gui
         self._runs = config['runs']
         self._parse_network(config)
         self._parse_activation(config)
         self._prepare_data(config)
+        self._stopped = False
 
     def learn(self):
-        return None
+        """
+        Bootstraps the learning phase.
+        """
+        self.start()
+
+    def stop(self):
+        """
+        Stops learning.
+        """
+        self._stopped = True
+
+    def run(self):
+        """
+        Learning phase.
+        """
+        for i in range(self._runs):
+            if self._stopped:
+                return
+            self._gui.notify_progress((i + 0.0) / self._runs)
+            import time
+            time.sleep(1)
 
     def _parse_activation(self, config):
         """

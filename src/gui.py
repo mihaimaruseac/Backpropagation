@@ -28,6 +28,8 @@ class MainWindow(gtk.Window):
         self.set_icon_from_file(ICON_FILE)
         self.connect('delete_event', self.__on_exit)
 
+        self._nw = None
+
         self._build_gui()
 
         self.show()
@@ -63,6 +65,15 @@ class MainWindow(gtk.Window):
                 "About this program", self.__on_about)
         _toolbar.insert(_btnAbout, -1)
 
+        _toolbar.insert(gtk.SeparatorToolItem(), -1)
+        self._pBar = gtk.ProgressBar()
+        self._pBar.set_text('Learning progress')
+        ti = gtk.ToolItem()
+        b = gtk.HBox()
+        b.pack_start(self._pBar, False, False, 5)
+        ti.add(b)
+        _toolbar.insert(ti, -1)
+
         return _toolbar
 
     def _build_toolbar_button(self, img_stock, label, tooltip, callback):
@@ -83,12 +94,25 @@ class MainWindow(gtk.Window):
         btn.connect('clicked', callback)
         return btn
 
+    def notify_progress(self, p, end=False):
+        """
+        Called from the neural network to notify the progress of the learning.
+        """
+        print 'Progress is {0}'.format(p)
+        if end:
+            p = 1
+            self._nw.stop()
+            self._nw = None
+        self._pBar.set_fraction(p)
+
     def __on_exit(self, widget, data=None):
         """
         Called when destroying the main window. Leave the gtk threads (and
         finish application).
         """
         gtk.main_quit()
+        if self._nw:
+            self._nw.stop()
 
     def __on_new(self, widget, data=None):
         """
@@ -99,10 +123,8 @@ class MainWindow(gtk.Window):
         r = cfg.get_settings()
         cfg.destroy()
         if r:
-            nw = network.Network(r)
-            r = nw.learn()
-            print "Result was {0}".format(r)
-            # TODO: interpret result of learning
+            self._nw = network.Network(r, self)
+            self._nw.learn()
 
     def __on_about(self, widget, data=None):
         """
