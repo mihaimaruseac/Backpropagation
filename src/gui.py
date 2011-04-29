@@ -4,6 +4,7 @@
 #
 
 import gtk
+import glib
 
 import config
 import network
@@ -22,13 +23,14 @@ class MainWindow(gtk.Window):
         widgets.
         """
         super(MainWindow, self).__init__()
-        self.set_size_request(800, 600)
+        self.set_size_request(XXX, YYY)
         self.set_resizable(False)
         self.set_title(TITLE)
         self.set_icon_from_file(ICON_FILE)
         self.connect('delete_event', self.__on_exit)
 
         self._nw = None
+        self._inhibit = False
 
         self._build_gui()
 
@@ -44,6 +46,12 @@ class MainWindow(gtk.Window):
 
         _toolbar = self._build_toolbar()
         _vbox.pack_start(_toolbar, False, False, 5)
+
+        _sw = gtk.ScrolledWindow()
+        self._graph = gtk.Image()
+        self._graph.set_from_file(ICON_FILE)
+        _sw.add_with_viewport(self._graph)
+        _vbox.pack_start(_sw, True, True, 5)
 
     def _build_toolbar(self):
         """
@@ -94,17 +102,22 @@ class MainWindow(gtk.Window):
         btn.connect('clicked', callback)
         return btn
 
-    def notify_progress(self, p, end=False):
+    def notify_progress(self, p):
         """
         Called from the neural network to notify the progress of the learning.
         """
-        print 'Progress is {0}'.format(p)
-        if end:
-            p = 1
-            self._nw.stop()
-            # READ DATA from network
-            self._nw = None
         self._pBar.set_fraction(p)
+
+    def __step(self):
+        if self._inhibit:
+            self._inhibit = False
+            return False
+
+        r = self._nw.learn_step()
+        if r:
+            # read data from network (learning done)
+            return False # stop callbacks
+        return True
 
     def __on_exit(self, widget, data=None):
         """
@@ -112,20 +125,24 @@ class MainWindow(gtk.Window):
         finish application).
         """
         gtk.main_quit()
-        if self._nw:
-            self._nw.stop()
 
     def __on_new(self, widget, data=None):
         """
         Called when the user issues a request for a new game.
         """
+        if self._nw:
+            self._inhibit = True
+
         cfg = config.Config(self, TITLE)
         cfg.display()
         r = cfg.get_settings()
         cfg.destroy()
+
         if r:
-            self._nw = network.Network(r, self)
-            self._nw.learn()
+            self._nw = network.Network(r, self, self._graph)
+            glib.timeout_add(25, self.__step)
+        else:
+            self._graph.set_from_file(ICON_FILE)
 
     def __on_about(self, widget, data=None):
         """

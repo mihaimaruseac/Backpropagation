@@ -4,9 +4,11 @@
 #
 
 import math
-from threading import Thread
 
+import grapher
 import normalizer
+from units import *
+from globaldefs import *
 
 def log(x):
     """
@@ -45,7 +47,7 @@ def dth(x):
     t = th(x)
     return 1 - t * t
 
-class Network(Thread):
+class Network(object):
     """
     Represents an entire neural network.
 
@@ -54,44 +56,35 @@ class Network(Thread):
     problem). All other methods are auxiliary.
     """
 
-    def __init__(self, config, gui):
+    def __init__(self, config, gui, graph):
         """
         Builds the network.
 
         config  User configuration.
         """
-        Thread.__init__(self)
         self._gui = gui
-        self._runs = config['runs']
         self._parse_network(config)
         self._parse_activation(config)
         self._prepare_data(config)
-        self._stopped = False
+        self._runs = config['runs']
+        self._baseName = config['baseName']
+        self._grapher = grapher.Grapher(graph, gui)
+        self._do_build_nw()
+        self._it = 0
 
-    def learn(self):
+    def learn_step(self):
         """
         Bootstraps the learning phase.
         """
-        self._gui.notify_progress(0)
-        self.start()
 
-    def stop(self):
-        """
-        Stops learning.
-        """
-        self._stopped = True
+        self._grapher.graph()
+        f = (self._it + 0.0) / self._runs
+        self._it += 1
+        self._gui.notify_progress(f)
 
-    def run(self):
-        """
-        Learning phase.
-        """
-        for i in range(self._runs):
-            if self._stopped:
-                return
-            self._gui.notify_progress((i + 0.0) / self._runs)
-#            import time
-#            time.sleep(1)
-        self._gui.notify_progress(1, True)
+        if self._it >= self._runs:
+            return True #TODO: return useful data
+        return None
 
     def _parse_activation(self, config):
         """
@@ -151,4 +144,75 @@ class Network(Thread):
                 lambda x: (ndata[x:x+self._N], ndata[x+self._N-1]),
                 range(len(ndata) - self._N))
         self._question = ndata[-self._N:]
+
+    def _do_build_nw(self):
+        """
+        Builds the neural network, layer by layer.
+        """
+        self.__build_inputs()
+        self.__build_hidden1()
+        self.__build_hidden2()
+        self.__build_output()
+        self._grapher.build_basic_network(
+                self._N, self._inputs,
+                self._h1, self._hidden1,
+                self._h2, self._hidden2,
+                self._output, self._end)
+
+    def __build_inputs(self):
+        """
+        Builds the input layer.
+        """
+        self._inputs = []
+        for i  in range(self._N):
+            self._inputs.append(Pattern('i{0}'.format(i)))
+
+        self._inputs.append(Fixed('fi'))
+
+    def __build_hidden1(self):
+        """
+        Builds the first hidden layer.
+        """
+        self._hidden1 = []
+        for i in range(self._h1):
+            n = Neuron(self._mW, self._MW, 'h1{0}'.format(i))
+            for inp in self._inputs:
+                n.connect(inp)
+            self._hidden1.append(n)
+        if self._h1:
+            self._hidden1.append(Fixed('fh1'))
+
+    def __build_hidden2(self):
+        """
+        Builds the second hidden layer.
+        """
+        self._hidden2 = []
+        for i in range(self._h2):
+            n = Neuron(self._mW, self._MW, 'h2{0}'.format(i))
+            if self._h1:
+                for inp in self._hidden1:
+                    n.connect(inp)
+            else:
+                for inp in self._inputs:
+                    n.connect(inp)
+            self._hidden2.append(n)
+        if self._h2:
+            self._hidden2.append(Fixed('fh2'))
+
+    def __build_output(self):
+        """
+        Builds the output layer and the end of the network.
+        """
+        self._output = Neuron(self._mW, self._MW, 'o')
+        if self._h2:
+            for inp in self._hidden2:
+                self._output.connect(inp)
+        elif self._h1:
+            for inp in self._hidden1:
+                self._output.connect(inp)
+        else:
+            for inp in self._inputs:
+                self._output.connect(inp)
+
+        self._end = Output(self._output, 'e')
 

@@ -12,3 +12,8 @@ IMG_FOLDER = 'res/'
 
 ICON_FILE = IMG_FOLDER + "nn.png"
 
+NETWORK_SUFFIX = '.nw.png'
+
+XXX = 800
+YYY = 600
+
