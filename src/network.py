@@ -75,19 +75,22 @@ class Network(object):
         self._logger = logging.getLogger(LOGNAME)
         self._logger.addHandler(logging.FileHandler(self._baseName + LOG_SUFFIX))
         self._rms = []
+        self._orms = 0
 
     def learn_step(self):
         """
         Bootstraps the learning phase.
         """
         rms = self._do_one_learning_step()
+        done = rms < MIN_RMS or abs(rms - self._orms) < MIN_DRMS
+        self._orms = rms
 
         self._grapher.graph()
-        f = (self._it + 0.0) / self._runs if rms > MIN_RMS else 1
+        f = (self._it + 0.0) / self._runs if not done else 1
         self._it += 1
         self._gui.notify_progress(f)
 
-        if self._it >= self._runs or rms < MIN_RMS:
+        if self._it >= self._runs or done:
             return True #TODO: return useful data
         return None
 

@@ -195,6 +195,17 @@ class Neuron(Unit):
         for (w, i) in zip(self._weights, self._inputs):
             i.report_error(w * self._err)
 
+        for i in range(len(self._weights)):
+            w, inp = self._weights[i], self._inputs[i]
+            delta = ETA * self._err * self._df(self._value) * inp.value()
+            _logger.info('Neuron {0}: delta weight{1}: {2}'.format(self._name, i, delta))
+            self._weights[i] -= delta
+            if self._weights[i] < -1:
+                self._weights[i] = -1
+            if self._weights[i] > 1:
+                self._weights[i] = 1
+            _logger.info('Neuron {0}: weight{1}: {2}'.format(self._name, i, self._weights[i]))
+
         self._err = 0
 
     def _draw_label_text(self, l):

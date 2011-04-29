@@ -22,4 +22,6 @@ LOGNAME = 'MAIN.log'
 LOGFNAME = LOGNAME
 
 MIN_RMS = 1e-4
+MIN_DRMS = 1e-5
+ETA = .2
 

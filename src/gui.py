@@ -141,7 +141,7 @@ class MainWindow(gtk.Window):
 
         if r:
             self._nw = network.Network(r, self, self._graph)
-            glib.timeout_add(25, self.__step)
+            glib.timeout_add(100, self.__step)
         else:
             self._graph.set_from_file(ICON_FILE)
 
