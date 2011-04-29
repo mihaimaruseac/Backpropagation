@@ -72,6 +72,7 @@ class Network(Thread):
         """
         Bootstraps the learning phase.
         """
+        self._gui.notify_progress(0)
         self.start()
 
     def stop(self):
@@ -88,8 +89,9 @@ class Network(Thread):
             if self._stopped:
                 return
             self._gui.notify_progress((i + 0.0) / self._runs)
-            import time
-            time.sleep(1)
+#            import time
+#            time.sleep(1)
+        self._gui.notify_progress(1, True)
 
     def _parse_activation(self, config):
         """

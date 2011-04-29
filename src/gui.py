@@ -102,6 +102,7 @@ class MainWindow(gtk.Window):
         if end:
             p = 1
             self._nw.stop()
+            # READ DATA from network
             self._nw = None
         self._pBar.set_fraction(p)
 
