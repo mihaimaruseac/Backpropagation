@@ -107,7 +107,7 @@ class Config(object):
         return _aVBox
 
 
-    def _build_labeled_input(self, text, parent):
+    def _build_labeled_input(self, text, parent, default='2'):
         """
         Builds a Edit TextBox with a Label to input one parameter.
 
@@ -119,6 +119,7 @@ class Config(object):
         _hBox.pack_start(_label, False, False, 5)
         w = gtk.Entry()
         w.set_width_chars(3)
+        w.set_text(default)
         _hBox.pack_start(w, True, True, 5)
         parent.add(_hBox)
         return w
@@ -200,6 +201,8 @@ class Config(object):
         """
         if not fName:
             return False
+
+        self._configDict['baseName'] = fName
 
         try:
             with open(fName) as f:
