@@ -7,8 +7,13 @@
 Holds all kind of neurons and their description.
 """
 
+from globaldefs import *
+
+import logging
 import pango
 import random
+
+_logger = logging.getLogger(LOGNAME)
 
 class Unit(object):
     """
@@ -20,6 +25,7 @@ class Unit(object):
         self._value = value
         self._x = 0
         self._y = 0
+        self._err = 0
 
     def value(self):
         return self._value
@@ -31,6 +37,15 @@ class Unit(object):
     def draw(self, pbuff, gc, size, pcon):
         self._draw_image(pbuff, gc, size)
         self._draw_label(pbuff, gc, size, pcon)
+
+    def compute_output(self):
+        pass
+
+    def report_and_learn_from_error(self):
+        pass
+
+    def report_error(self, err):
+        pass
 
     def _draw_image(self, pbuff, gc, size):
         pbuff.draw_arc(gc, False, self._x, self._y, size, size, 0, 64 * 360)
@@ -76,7 +91,8 @@ class Pattern(Unit):
         l.set_text(">")
 
     def _draw_image(self, pbuff, gc, size):
-        ps = [(self._x, self._y), (self._x + size, self._y + size / 2),
+        ps = [(self._x, self._y),
+                (self._x + size, self._y + size / 2),
                 (self._x, self._y + size)]
         pbuff.draw_polygon(gc, False, ps)
 
@@ -102,6 +118,20 @@ class Output(Unit):
     def value(self):
         return self._n.value()
 
+    def get_error(self):
+        """
+        Returns the error in this output. Starts the backpropagation phase.
+        """
+        self._err = self._n.value() - self._desired
+        return self._err
+
+    def report_and_learn_from_error(self):
+        """
+        Reports the error to the output neuron and finishes execution (there's
+        nothing to learn here).
+        """
+        self._n.report_error(self._err)
+
     def _draw_label_text(self, l):
         l.set_text("=")
 
@@ -120,13 +150,14 @@ class Neuron(Unit):
 
     self.value() will return the output of the neuron
     """
-    def __init__(self, minW, maxW, name=''):
+    def __init__(self, minW, maxW, f, df, name=''):
         super(Neuron, self).__init__(name, None)
-        print minW, maxW
         self._min = minW
         self._max = maxW
         self._weights = []
         self._inputs = []
+        self._f = f
+        self._df = df
 
     def connect(self, i):
         """
@@ -134,6 +165,37 @@ class Neuron(Unit):
         """
         self._inputs.append(i)
         self._weights.append(random.uniform(self._min, self._max))
+
+    def compute_output(self):
+        """
+        Computes the output of this neuron, depending on its inputs and its
+        weights.
+        """
+        s = 0
+        for (w, i) in zip(self._weights, self._inputs):
+            s += w * i.value()
+        self._value = self._f(s)
+        _logger.info('Neuron {0}: activation: {1}'.format(self._name, self._value))
+
+    def report_error(self, err):
+        """
+        Receives an error from the next layer. Acummulate all values before
+        trying to learn something and report the error to the previous layer.
+        """
+        self._err += err
+        _logger.info('Neuron {0}: Received error: {1}'.format(self._name, err))
+
+    def report_and_learn_from_error(self):
+        """
+        Reports the total error to the previous layer, learns from the error
+        and resets it.
+        """
+        _logger.info('Neuron {0}: Total error: {1}'.format(self._name, self._err))
+
+        for (w, i) in zip(self._weights, self._inputs):
+            i.report_error(w * self._err)
+
+        self._err = 0
 
     def _draw_label_text(self, l):
         l.set_text("")

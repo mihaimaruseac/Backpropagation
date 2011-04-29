@@ -5,6 +5,7 @@
 
 import gtk
 import glib
+import logging
 
 import config
 import network
@@ -170,11 +171,14 @@ def main():
     """
     Main function. Construct the windows and start all application threads.
     """
+    l = logging.getLogger(LOGNAME)
+    l.setLevel(logging.INFO)
     w = MainWindow()
     gtk.gdk.threads_init()
     gtk.gdk.threads_enter()
     gtk.main()
     gtk.gdk.threads_leave()
+    logging.shutdown()
 
 if __name__ == '__main__':
     main()

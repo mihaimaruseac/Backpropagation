@@ -13,7 +13,13 @@ IMG_FOLDER = 'res/'
 ICON_FILE = IMG_FOLDER + "nn.png"
 
 NETWORK_SUFFIX = '.nw.png'
+LOG_SUFFIX = '.log'
 
 XXX = 800
 YYY = 600
+
+LOGNAME = 'MAIN.log'
+LOGFNAME = LOGNAME
+
+MIN_RMS = 1e-4
 

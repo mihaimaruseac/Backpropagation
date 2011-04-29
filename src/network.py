@@ -3,6 +3,7 @@
 # (c) Mihai Maruseac, 341C3 (2011), mihai.maruseac@rosedu.org
 #
 
+import logging
 import math
 
 import grapher
@@ -71,20 +72,59 @@ class Network(object):
         self._grapher = grapher.Grapher(graph, gui)
         self._do_build_nw()
         self._it = 0
+        self._logger = logging.getLogger(LOGNAME)
+        self._logger.addHandler(logging.FileHandler(self._baseName + LOG_SUFFIX))
+        self._rms = []
 
     def learn_step(self):
         """
         Bootstraps the learning phase.
         """
+        rms = self._do_one_learning_step()
 
         self._grapher.graph()
-        f = (self._it + 0.0) / self._runs
+        f = (self._it + 0.0) / self._runs if rms > MIN_RMS else 1
         self._it += 1
         self._gui.notify_progress(f)
 
-        if self._it >= self._runs:
+        if self._it >= self._runs or rms < MIN_RMS:
             return True #TODO: return useful data
         return None
+
+    def _do_one_learning_step(self):
+        """
+        Does one learning step, controlling each neuron in the network and
+        updating the weights and the logs.
+        """
+        rms = 0
+        self._logger.info('Step {0} starting'.format(self._it))
+        for (inp, out) in self._data:
+            self._logger.info('input: {0}, expected: {1}'.format(inp, out))
+            for (ineuron, ivalue) in zip(self._inputs, inp):
+                ineuron.set(ivalue)
+            self._end.set_desired(out)
+            for n in self._hidden1:
+                n.compute_output()
+            for n in self._hidden2:
+                n.compute_output()
+            self._output.compute_output()
+            e = self._end.get_error()
+            rms += e * e
+            self._end.report_and_learn_from_error()
+            self._output.report_and_learn_from_error()
+            for n in self._hidden2:
+                n.report_and_learn_from_error()
+            for n in self._hidden1:
+                n.report_and_learn_from_error()
+        rms /= len(self._data)
+        rms = math.sqrt(rms)
+
+        self._logger.info('===================')
+        self._logger.info('RMS: {0}'.format(rms))
+        self._logger.info('===================')
+        self._logger.info('')
+        self._rms.append(rms)
+        return rms
 
     def _parse_activation(self, config):
         """
@@ -141,7 +181,7 @@ class Network(object):
         ndata = map(lambda x: self._normalizer.normalize(x), data)
 
         self._data = map(
-                lambda x: (ndata[x:x+self._N], ndata[x+self._N-1]),
+                lambda x: (ndata[x:x+self._N], ndata[x+self._N]),
                 range(len(ndata) - self._N))
         self._question = ndata[-self._N:]
 
@@ -175,7 +215,7 @@ class Network(object):
         """
         self._hidden1 = []
         for i in range(self._h1):
-            n = Neuron(self._mW, self._MW, 'h1{0}'.format(i))
+            n = Neuron(self._mW, self._MW, self._f, self._df, 'h1{0}'.format(i))
             for inp in self._inputs:
                 n.connect(inp)
             self._hidden1.append(n)
@@ -188,7 +228,7 @@ class Network(object):
         """
         self._hidden2 = []
         for i in range(self._h2):
-            n = Neuron(self._mW, self._MW, 'h2{0}'.format(i))
+            n = Neuron(self._mW, self._MW, self._f, self._df, 'h2{0}'.format(i))
             if self._h1:
                 for inp in self._hidden1:
                     n.connect(inp)
@@ -203,7 +243,7 @@ class Network(object):
         """
         Builds the output layer and the end of the network.
         """
-        self._output = Neuron(self._mW, self._MW, 'o')
+        self._output = Neuron(self._mW, self._MW, self._f, self._df, 'o')
         if self._h2:
             for inp in self._hidden2:
                 self._output.connect(inp)
