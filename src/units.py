@@ -43,6 +43,12 @@ class Unit(object):
     def _draw_label_text(self, l):
         l.set_text(self._name)
 
+    def exit_point(self, size):
+        return (self._x + size, self._y + size / 2)
+
+    def entry_point(self, size):
+        return (self._x, self._y + size / 2)
+
 class Fixed(Unit):
     """
     A unit holding a fixed value, keeping that value constant and not
@@ -50,6 +56,8 @@ class Fixed(Unit):
     """
     def __init__(self, name='', value=1):
         super(Fixed, self).__init__(name, value)
+        self._inputs = []
+        self._weights = []
 
     def _draw_label_text(self, l):
         l.set_text("1")
@@ -103,6 +111,9 @@ class Output(Unit):
                 (self._x + size - 10, self._y + size)]
         pbuff.draw_polygon(gc, False, ps)
 
+    def entry_point(self, size):
+        return (self._x - 10, self._y + size / 2)
+
 class Neuron(Unit):
     """
     Actual neuron.
@@ -111,6 +122,7 @@ class Neuron(Unit):
     """
     def __init__(self, minW, maxW, name=''):
         super(Neuron, self).__init__(name, None)
+        print minW, maxW
         self._min = minW
         self._max = maxW
         self._weights = []

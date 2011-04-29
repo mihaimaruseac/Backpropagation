@@ -24,10 +24,33 @@ class Grapher(object):
         Called when network graph needs to be updated.
         """
         self._do_cleanup_draw()
+
         gc = self._w.get_style().black_gc
         pcon = self._w.get_pango_context()
-        for n in self._neurons:
+        for n in self._units:
             n.draw(self.__pixmap, gc, SIZE, pcon)
+
+        ngc = self._w.get_window().new_gc()
+        ngc.copy(gc)
+        ngc.set_line_attributes(2, gtk.gdk.LINE_SOLID, gtk.gdk.CAP_ROUND,
+                gtk.gdk.JOIN_BEVEL)
+        ex, ey = self._end.entry_point(SIZE)
+        ox, oy = self._output.exit_point(SIZE)
+        self.__pixmap.draw_line(ngc, ox, oy, ex, ey)
+
+        for n in self._neurons:
+            ex, ey = n.entry_point(SIZE)
+            for (nn, w) in zip(n._inputs, n._weights):
+                if nn == n:
+                    # TODO: recurrent networks
+                    pass
+                if w < 0:
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(red=abs(w)))
+                else:
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(blue=w))
+                sx, sy = nn.exit_point(SIZE)
+                self.__pixmap.draw_line(ngc, sx, sy, ex, ey)
+
         self._img.set_from_pixmap(self.__pixmap, None)
 
     def build_basic_network(self, N, inputs, h1, hidden1, h2, hidden2,
@@ -53,7 +76,10 @@ class Grapher(object):
         x += PAD + SIZE
         self._place([end], x)
 
-        self._neurons = inputs + hidden1 + hidden2 + [output, end]
+        self._neurons = hidden1 + hidden2 + [output]
+        self._end = end
+        self._output = output
+        self._units = inputs + self._neurons + [end]
 
     def _place(self, elems, x):
         """
