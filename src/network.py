@@ -79,6 +79,18 @@ class Network(object):
         self._orms = 0
         self._grapher.graph()
 
+    def baseName(self):
+        return self._baseName
+
+    def drawable(self):
+        return self._grapher.drawable()
+
+    def neurons(self):
+        return self._inputs + self._hidden1 + self._hidden2 + [self._output, self._end]
+
+    def orig_data(self):
+        return self._orig_data
+
     def learn_step(self):
         """
         Bootstraps the learning phase.
@@ -94,8 +106,6 @@ class Network(object):
 
         if self._it >= self._runs or done:
             results, predicted = self._predict()
-            print results
-            print predicted
             s = saver.Save(self, results + [predicted])
             s.save_all()
             r = {'predicted':predicted, 'err': self._rms[-1]}

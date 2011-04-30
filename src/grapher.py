@@ -19,6 +19,9 @@ class Grapher(object):
         self._w = w
         self._pixmap = None
 
+    def drawable(self):
+        return self._pixmap
+
     def graph(self):
         """
         Called when network graph needs to be updated.

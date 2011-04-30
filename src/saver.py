@@ -14,6 +14,7 @@ class Save(object):
     """
     def __init__(self, network, results):
         self._nw = network
+        self._baseName = self._nw.baseName()
         self._rs = results
 
     def save_all(self):
@@ -29,27 +30,25 @@ class Save(object):
         """
         Saves the network to a png file.
         """
-        fName = self._nw._baseName + NETWORK_SUFFIX
-        drawable = self._nw._grapher._pixmap
+        fName = self._baseName + NETWORK_SUFFIX
+        drawable = self._nw.drawable()
         cmap = drawable.get_colormap()
         pbuf = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, True, 8,
                 *drawable.get_size())
         pbuf = pbuf.get_from_drawable(drawable, cmap, 0, 0, 0, 0,
                 *drawable.get_size())
-        gc = self._nw._grapher._w.get_style().bg_gc[gtk.STATE_NORMAL]
         pbuf.save(fName, 'png')
 
     def _save_nw_to_matrix(self):
         """
         Saves the weights from the network to a file.
         """
-        ns = self._nw._inputs + self._nw._hidden1 + self._nw._hidden2 +\
-            [self._nw._output, self._nw._end]
+        ns = self._nw.neurons()
         lname = max(map(lambda n:len(n.name()), ns)) + 4
         l = max(lname, 7)
         t = (1 + len(ns)) * (l + 1) + 1
         sep = '{0:-^{1}}'.format('',t)
-        fName =self._nw._baseName + NETWORK_MATRIX_SUFFIX
+        fName =self._baseName + NETWORK_MATRIX_SUFFIX
 
         with open(fName, 'w') as f:
             f.write(sep + '\n')
@@ -79,13 +78,13 @@ class Save(object):
         """
         rms = self._nw._rms
         l = len(rms)
-        fName = self._nw._baseName + RMS_FILE_SUFFIX
+        fName = self._baseName + RMS_FILE_SUFFIX
 
         with open(fName, 'w') as f:
             for (i, r) in zip(range(l), rms):
                 f.write('{0}\t{1:.5}\n'.format(i + 1, r))
 
-        pngName = self._nw._baseName + RMS_PLOT_SUFFIX
+        pngName = self._baseName + RMS_PLOT_SUFFIX
         cmd = \
             'echo \'set term png; plot "{0}" using 1:2 title "Error" ' \
             'with lines\' | gnuplot > {1}'.format(fName, pngName)
@@ -97,9 +96,9 @@ class Save(object):
         them. Plot done via gnuplot, see above method.
         """
         N = self._nw._N
-        odata = self._nw._orig_data
+        odata = self._nw.orig_data()
         n = len(odata)
-        fName = self._nw._baseName + VAL_SUFFIX
+        fName = self._baseName + VAL_SUFFIX
 
         with open(fName, 'w') as f:
             for (i, d) in zip(range(N), odata):
@@ -110,7 +109,7 @@ class Save(object):
 
             f.write('{0}\t-\t{1:.5}\n'.format(n + 2, self._rs[-1]))
 
-        pngName = self._nw._baseName + VAL_PLOT_SUFFIX
+        pngName = self._baseName + VAL_PLOT_SUFFIX
         cmd = \
             'echo \'set term png; plot "{0}" using 1:2 title "Inputs", ' \
             '"{0}" using 1:3 title "Outputs" with lines \' | gnuplot ' \
