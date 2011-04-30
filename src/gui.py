@@ -117,7 +117,7 @@ class MainWindow(gtk.Window):
         if r:
             self._md = gtk.MessageDialog(self, gtk.DIALOG_DESTROY_WITH_PARENT,
                 gtk.MESSAGE_INFO, gtk.BUTTONS_CLOSE,
-                'Network predicts {0} +/- {1:.2}%'.format(
+                'Network predicts {0} ± {1:.2}%'.format(
                     r['predicted'], 100*r['err']))
             self._md.connect('response', self.__close_modal)
             self._md.show_all()

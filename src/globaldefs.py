@@ -13,6 +13,11 @@ IMG_FOLDER = 'res/'
 ICON_FILE = IMG_FOLDER + "nn.png"
 
 NETWORK_SUFFIX = '.nw.png'
+NETWORK_MATRIX_SUFFIX = '.nw.weights'
+RMS_FILE_SUFFIX = '.err'
+RMS_PLOT_SUFFIX = '.err.png'
+VAL_SUFFIX = '.val'
+VAL_PLOT_SUFFIX = '.val.png'
 LOG_SUFFIX = '.log'
 
 XXX = 800

@@ -17,7 +17,7 @@ class Grapher(object):
     def __init__(self, img, w):
         self._img = img
         self._w = w
-        self.__pixmap = None
+        self._pixmap = None
 
     def graph(self):
         """
@@ -28,7 +28,7 @@ class Grapher(object):
         gc = self._w.get_style().black_gc
         pcon = self._w.get_pango_context()
         for n in self._units:
-            n.draw(self.__pixmap, gc, SIZE, pcon)
+            n.draw(self._pixmap, gc, SIZE, pcon)
 
         ngc = self._w.get_window().new_gc()
         ngc.copy(gc)
@@ -36,11 +36,11 @@ class Grapher(object):
                 gtk.gdk.JOIN_BEVEL)
         ex, ey = self._end.entry_point(SIZE)
         ox, oy = self._output.exit_point(SIZE)
-        self.__pixmap.draw_line(ngc, ox, oy, ex, ey)
+        self._pixmap.draw_line(ngc, ox, oy, ex, ey)
 
         for n in self._neurons:
             ex, ey = n.entry_point(SIZE)
-            for (nn, w) in zip(n._inputs, n._weights):
+            for (nn, w) in zip(n.inputs(), n.weights()):
                 if nn == n:
                     # TODO: recurrent networks
                     pass
@@ -49,9 +49,9 @@ class Grapher(object):
                 else:
                     ngc.set_rgb_fg_color(gtk.gdk.Color(blue=w))
                 sx, sy = nn.exit_point(SIZE)
-                self.__pixmap.draw_line(ngc, sx, sy, ex, ey)
+                self._pixmap.draw_line(ngc, sx, sy, ex, ey)
 
-        self._img.set_from_pixmap(self.__pixmap, None)
+        self._img.set_from_pixmap(self._pixmap, None)
 
     def build_basic_network(self, N, inputs, h1, hidden1, h2, hidden2,
             output, end):
@@ -95,8 +95,8 @@ class Grapher(object):
         """
         Does the initial drawing of the network, cleaning the drawing area.
         """
-        if not self.__pixmap:
-            self.__pixmap = gtk.gdk.Pixmap(self._w.get_window(), self._H, self._W)
+        if not self._pixmap:
+            self._pixmap = gtk.gdk.Pixmap(self._w.get_window(), self._H, self._W)
         gc = self._w.get_style().bg_gc[gtk.STATE_NORMAL]
-        self.__pixmap.draw_rectangle(gc, True, 0, 0, self._H, self._W)
+        self._pixmap.draw_rectangle(gc, True, 0, 0, self._H, self._W)
 

@@ -27,6 +27,9 @@ class Unit(object):
         self._y = 0
         self._err = 0
 
+    def name(self):
+        return self._name
+
     def value(self):
         return self._value
 
@@ -46,6 +49,12 @@ class Unit(object):
 
     def report_error(self, err):
         pass
+
+    def inputs(self):
+        return []
+
+    def weights(self):
+        return []
 
     def _draw_image(self, pbuff, gc, size):
         pbuff.draw_arc(gc, False, self._x, self._y, size, size, 0, 64 * 360)
@@ -71,8 +80,6 @@ class Fixed(Unit):
     """
     def __init__(self, name='', value=1):
         super(Fixed, self).__init__(name, value)
-        self._inputs = []
-        self._weights = []
 
     def _draw_label_text(self, l):
         l.set_text("1")
@@ -108,6 +115,12 @@ class Output(Unit):
         super(Output, self).__init__(name, None)
         self._n = n
         self._desired = None
+
+    def inputs(self):
+        return [self._n]
+
+    def weights(self):
+        return [1]
 
     def desired(self):
         return self._desired
@@ -158,6 +171,12 @@ class Neuron(Unit):
         self._inputs = []
         self._f = f
         self._df = df
+
+    def inputs(self):
+        return self._inputs
+
+    def weights(self):
+        return self._weights
 
     def connect(self, i):
         """

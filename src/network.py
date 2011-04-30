@@ -8,6 +8,7 @@ import math
 
 import grapher
 import normalizer
+import saver
 from units import *
 from globaldefs import *
 
@@ -94,9 +95,9 @@ class Network(object):
         if self._it >= self._runs or done:
             results, predicted = self._predict()
             print results
-            print self._rms[-5:]
-            print self._orig_data
             print predicted
+            s = saver.Save(self, results + [predicted])
+            s.save_all()
             r = {'predicted':predicted, 'err': self._rms[-1]}
             return r
         return None
