@@ -48,9 +48,9 @@ class Grapher(object):
                     # TODO: recurrent networks
                     pass
                 if w < 0:
-                    ngc.set_rgb_fg_color(gtk.gdk.Color(red=abs(w)))
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(red=.9*abs(w)))
                 else:
-                    ngc.set_rgb_fg_color(gtk.gdk.Color(blue=w))
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(blue=.9*w))
                 sx, sy = nn.exit_point(SIZE)
                 self._pixmap.draw_line(ngc, sx, sy, ex, ey)
 
