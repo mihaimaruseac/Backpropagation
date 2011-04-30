@@ -115,9 +115,24 @@ class MainWindow(gtk.Window):
 
         r = self._nw.learn_step()
         if r:
-            # read data from network (learning done)
-            return False # stop callbacks
+            self._md = gtk.MessageDialog(self, gtk.DIALOG_DESTROY_WITH_PARENT,
+                gtk.MESSAGE_INFO, gtk.BUTTONS_CLOSE,
+                'Network predicts {0} +/- {1:.2}%'.format(
+                    r['predicted'], 100*r['err']))
+            self._md.connect('response', self.__close_modal)
+            self._md.show_all()
+            self._md.show()
+            self._nw = None
+            return False
         return True
+
+    def __close_modal(self, widget, data=None):
+        """
+        Closes the prediction result dialog.
+        """
+        self._md.destroy()
+        self._pBar.set_fraction(0)
+        self._graph.set_from_file(ICON_FILE)
 
     def __on_exit(self, widget, data=None):
         """
@@ -142,6 +157,7 @@ class MainWindow(gtk.Window):
             self._nw = network.Network(r, self, self._graph)
             glib.timeout_add(100, self.__step)
         else:
+            self._nw = None
             self._graph.set_from_file(ICON_FILE)
 
     def __on_about(self, widget, data=None):

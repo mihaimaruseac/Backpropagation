@@ -97,7 +97,8 @@ class Network(object):
             print self._rms[-5:]
             print self._orig_data
             print predicted
-            return True #TODO: return useful data
+            r = {'predicted':predicted, 'err': self._rms[-1]}
+            return r
         return None
 
     def _predict(self):
