@@ -25,7 +25,6 @@ class MainWindow(gtk.Window):
         """
         super(MainWindow, self).__init__()
         self.set_size_request(XXX, YYY)
-        self.set_resizable(False)
         self.set_title(TITLE)
         self.set_icon_from_file(ICON_FILE)
         self.connect('delete_event', self.__on_exit)
