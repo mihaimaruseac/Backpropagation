@@ -76,6 +76,7 @@ class Network(object):
         self._logger.addHandler(logging.FileHandler(self._baseName + LOG_SUFFIX))
         self._rms = []
         self._orms = 0
+        self._grapher.graph()
 
     def learn_step(self):
         """
@@ -91,8 +92,49 @@ class Network(object):
         self._gui.notify_progress(f)
 
         if self._it >= self._runs or done:
+            results, predicted = self._predict()
+            print results
+            print self._rms[-5:]
+            print self._orig_data
+            print predicted
             return True #TODO: return useful data
         return None
+
+    def _predict(self):
+        """
+        After learning phase is ended, predict the next value and return the
+        results for each pattern.
+        """
+        results = []
+        for (inp, out) in self._data:
+            self._end.set_desired(out)
+            self._present_pattern(inp)
+            results.append(self._normalizer.recast(self._end.value()))
+        self._present_pattern(self._question)
+        return (results, self._normalizer.recast(self._end.value()))
+
+    def _present_pattern(self, pattern):
+        """
+        Presents a pattern to the neural network.
+        """
+        for (ineuron, ivalue) in zip(self._inputs, pattern):
+            ineuron.set(ivalue)
+        for n in self._hidden1:
+            n.compute_output()
+        for n in self._hidden2:
+            n.compute_output()
+        self._output.compute_output()
+
+    def _backpropagate(self):
+        """
+        Does the backpropagation.
+        """
+        self._end.report_and_learn_from_error()
+        self._output.report_and_learn_from_error()
+        for n in self._hidden2:
+            n.report_and_learn_from_error()
+        for n in self._hidden1:
+            n.report_and_learn_from_error()
 
     def _do_one_learning_step(self):
         """
@@ -103,22 +145,11 @@ class Network(object):
         self._logger.info('Step {0} starting'.format(self._it))
         for (inp, out) in self._data:
             self._logger.info('input: {0}, expected: {1}'.format(inp, out))
-            for (ineuron, ivalue) in zip(self._inputs, inp):
-                ineuron.set(ivalue)
             self._end.set_desired(out)
-            for n in self._hidden1:
-                n.compute_output()
-            for n in self._hidden2:
-                n.compute_output()
-            self._output.compute_output()
+            self._present_pattern(inp)
             e = self._end.get_error()
             rms += e * e
-            self._end.report_and_learn_from_error()
-            self._output.report_and_learn_from_error()
-            for n in self._hidden2:
-                n.report_and_learn_from_error()
-            for n in self._hidden1:
-                n.report_and_learn_from_error()
+            self._backpropagate()
         rms /= len(self._data)
         rms = math.sqrt(rms)
 
@@ -173,7 +204,7 @@ class Network(object):
         Reads learning set, normalizing it and preparing the auxiliary lists
         to be used while learning.
         """
-        data = config['data']
+        self._orig_data = data = config['data']
 
         # ranges
         data_max = max(data)
