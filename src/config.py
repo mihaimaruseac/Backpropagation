@@ -247,8 +247,8 @@ class Config(object):
         if self._configDict['h1'] == 0 and self._configDict['h2'] != 0:
             self._report(gtk.MESSAGE_WARNING, "Still a network with a single layer")
 
-        if self._configDict['N'] < 2:
-            self._report(gtk.MESSAGE_ERROR, "Order should be at least 2")
+        if self._configDict['N'] < 1:
+            self._report(gtk.MESSAGE_ERROR, "Order should be at least 1")
             return False
 
         return True
