@@ -166,7 +166,7 @@ class Neuron(Unit):
 
     self.value() will return the output of the neuron
     """
-    def __init__(self, minW, maxW, f, df, name=''):
+    def __init__(self, minW, maxW, f, df, momentum, name=''):
         super(Neuron, self).__init__(name, 0)
         self._min = minW
         self._max = maxW
@@ -174,6 +174,9 @@ class Neuron(Unit):
         self._inputs = []
         self._f = f
         self._df = df
+        self._momentum = momentum
+        if self._momentum:
+            self._ow = []
 
     def inputs(self):
         return self._inputs
@@ -187,6 +190,8 @@ class Neuron(Unit):
         """
         self._inputs.append(i)
         self._weights.append(random.uniform(self._min, self._max))
+        if self._momentum:
+            self._ow.append(0)
 
     def set_recurrent(self, recurrent):
         """
@@ -194,6 +199,7 @@ class Neuron(Unit):
         """
         if recurrent:
             self._selfw = random.uniform(self._min, self._max)
+            self._sow = 0
         else:
             self._selfw = None
 
@@ -240,6 +246,9 @@ class Neuron(Unit):
         for i in range(len(self._weights)):
             w, inp = self._weights[i], self._inputs[i]
             delta = ETA * self._err * self._df(self._value) * inp.value()
+            if self._momentum:
+                delta += ETA * ALPHA * self._ow[i]
+                self._ow[i] = delta
             _logger.info('Neuron {0}: delta weight{1}: {2}'.format(self._name, i, delta))
             self._weights[i] -= delta
             if self._weights[i] < -1:
@@ -249,6 +258,9 @@ class Neuron(Unit):
             _logger.info('Neuron {0}: weight{1}: {2}'.format(self._name, i, self._weights[i]))
         if self._selfw:
             delta = ETA * self._err * self._df(self._value) * self._value
+            if self._momentum:
+                delta += ETA * ALPHA * self._sow
+                self._sow = delta
             _logger.info('Neuron {0}: delta self weight: {1}'.format(self._name, self._selfw))
             self._selfw -= delta
             if self._selfw < -1:

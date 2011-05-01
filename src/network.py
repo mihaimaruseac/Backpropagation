@@ -262,7 +262,7 @@ class Network(object):
         """
         self._hidden1 = []
         for i in range(self._h1):
-            n = Neuron(self._mW, self._MW, self._f, self._df, 'h1{0}'.format(i))
+            n = Neuron(self._mW, self._MW, self._f, self._df, self._momentum, 'h1{0}'.format(i))
             n.set_recurrent(self._recurrent)
             for inp in self._inputs:
                 n.connect(inp)
@@ -276,7 +276,7 @@ class Network(object):
         """
         self._hidden2 = []
         for i in range(self._h2):
-            n = Neuron(self._mW, self._MW, self._f, self._df, 'h2{0}'.format(i))
+            n = Neuron(self._mW, self._MW, self._f, self._df, self._momentum, 'h2{0}'.format(i))
             n.set_recurrent(self._recurrent)
             if self._h1:
                 for inp in self._hidden1:
@@ -292,7 +292,7 @@ class Network(object):
         """
         Builds the output layer and the end of the network.
         """
-        self._output = Neuron(self._mW, self._MW, self._f, self._df, 'o')
+        self._output = Neuron(self._mW, self._MW, self._f, self._df, self._momentum, 'o')
         self._output.set_recurrent(self._recurrent)
         if self._h2:
             for inp in self._hidden2:
