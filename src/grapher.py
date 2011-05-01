@@ -3,6 +3,8 @@
 # (c) Mihai Maruseac, 341C3 (2011), mihai.maruseac@rosedu.org
 #
 
+import normalizer
+
 import gtk
 
 from globaldefs import *
@@ -42,22 +44,30 @@ class Grapher(object):
         ox, oy = self._output.exit_point(SIZE)
         self._pixmap.draw_line(ngc, ox, oy, ex, ey)
 
+        ws = []
+        for n in self._neurons:
+            ws += n.weights()
+        m, M = min(ws), max(ws)
+        N = normalizer.Normalizer(m, M, -1, 1)
+
         for n in self._neurons:
             ex, ey = n.entry_point(SIZE)
             for (nn, w) in zip(n.inputs(), n.weights()):
-                if w < 0:
-                    ngc.set_rgb_fg_color(gtk.gdk.Color(red=.9*abs(w)))
+                _w = N.normalize(w)
+                if _w < 0:
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(red=abs(_w)))
                 else:
-                    ngc.set_rgb_fg_color(gtk.gdk.Color(blue=.9*w))
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(green=_w))
                 sx, sy = nn.exit_point(SIZE)
                 self._pixmap.draw_line(ngc, sx, sy, ex, ey)
             rw = n.recurrent_weight()
             if rw:
+                _w = N.normalize(rw)
                 sx, sy = n.exit_point(SIZE)
                 if rw < 0:
-                    ngc.set_rgb_fg_color(gtk.gdk.Color(red=.9*abs(rw)))
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(red=abs(_w)))
                 else:
-                    ngc.set_rgb_fg_color(gtk.gdk.Color(blue=.9*rw))
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(green=_w))
                 line = [(sx, sy),
                         (sx + RPAD, sy - SIZE / 2),
                         (sx - SIZE / 2, sy - SIZE / 2 - RPAD),
