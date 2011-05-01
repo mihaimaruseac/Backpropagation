@@ -1,0 +1,145 @@
+Mihai Maruseac, 341C3
+INVA, Tema 3
+Backpropagation
+
+1. Mod rulare
+^^^^^^^^^^^^^
+
+Se rulează direct
+
+    ./bp.py
+
+Se setează parametrii pentru fiecare simulare. Cele 4 teste prezentate și
+parametrii corespunzători sunt descrise în secțiunea Teste.
+
+
+2. Descriere generală
+^^^^^^^^^^^^^^^^^^^^^
+
+Implementarea este realizată în Python.
+
+Pentru a asigura o interfață uniformă în procesul de învățare, s-au
+implementat mai multe unități în rețea. O unitate poate fi:
+
+    * Pattern: o intrare dintr-un șablon de test
+    * Fixed: o intrare fixată la o anumită valoare (folosită pentru threshold)
+    * Output: unitatea de comparație între valoarea produsă și cea așteptată
+    * Neuron: un neuron oarecare
+
+Între neuron-ul de output și Output se presupune existența unei legături de
+pondere fixată 1. Astfel, toate instanțele Neuron folosesc aceeași regulă de
+update a ponderilor, cea a neuronilor din straturile ascunse.
+
+Jurnalizarea este realizată utilizând modulul de logging din Python. Numele
+neuronilor sunt sugestive: o literă (și un număr) reprezentând stratul și
+tipul și un număr reprezentând un indice. Astfel, din logging se poate urmări
+evoluția algoritmului de învățare.
+
+La finalizarea învățării, se salvează matricea de ponderi, o imagine a
+rețelei, un plot al erorii pe durata învățării și listing-ul lui într-un
+fișier. Se salvează și un plot al datelor inițiale și al datelor prezise,
+precum și un listing al lor.
+
+Imaginea rețelei folosește un cod al culorilor pentru ponderi. Culorile roșii
+reprezintă ponderi negative (inhibatoare) iar cele verzi ponderi pozitive. Cu
+cât nuanța e mai pură, cu atât mai mare este ponderea. De asemenea, fiecare
+din cele 4 tipuri de unități sunt desenate diferit.
+
+Datele inițiale sunt normalizate în intervalul [0, 1], astfel încât să se
+poată produce și date în exteriorul intervalului determinat de minimul și
+maximul datelor de intrare. Practic, modulul de normalizare nu normalizează în
+intervalul [min, max] ci în [min + eps%, max - eps%].
+
+3. Teste
+^^^^^^^^
+
+Există 4 teste, descrise în subsecțiunile următoare. Sunt descrise și
+configurațiile care au produs cele mai bune rezultate, împreună cu rezultatul.
+După mai multe teste, se pot produce și rezultate mai bune.
+
+3.a. USD currency
+-----------------
+
+Setul de date reprezintă paritatea USD-EUR, luată de pe
+http://en.wikipedia.org/wiki/Tables_of_historical_exchange_rates_to_the_USD
+
+Valoarea așteptată: 1.0827.
+N: 4
+h1: 2
+h2: 0
+activation: tanh
+learning rate: .1
+recurrent: False
+momentum: False
+runs: 1000
+weights: [-1, 1]
+RMS: .01, 0
+result: 1.11, 2.5%
+
+3.b. Medii
+----------
+
+Fiecare valoare din set este media aritmetică a celor 2 valori anterioare.
+
+Valoarea așteptată: 65.625.
+N: 2
+h1: 0
+h2: 0
+activation: log in [-1, 1]
+learning rate: .1
+recurrent: False
+momentum: False
+runs: 1000
+weights: [-1, 1]
+RMS: .01, 0
+result: 65.71, .97%
+
+3.c. Sigmoid
+------------
+
+Fiecare valoare din set este rezultatul sigmoid(r) unde r este raportul celor
+2 valori anterioare și sigmoid este funcția sigmoid.
+
+Valoarea așteptată: .72.
+N: 2
+h1: 2
+h2: 0
+activation: log in [0, 1]
+learning rate: .1
+recurrent: False
+momentum: False
+runs: 1000
+weights: [-1, 1]
+RMS: .01, 1
+result: .72, 4.9%
+
+3.d. Sinus
+----------
+
+Fiecare valoare reprezintă valoarea funcției sinus din .1 în .1.
+
+Valoarea așteptată: .99957.
+N: 5
+h1: 4
+h2: 2
+activation: tanh
+learning rate: .1
+recurrent: False
+momentum: False
+runs: 1000
+weights: [-1, 1]
+RMS: .01, 0
+result: .99898, 2.3%
+
+4. Conținut arhivă
+^^^^^^^^^^^^^^^^^^
+
+Arhiva conține:
+	* sursele implementării în directorul src/ și în directorul părinte
+	* folder-ul test/ conținând o suită de teste:
+        * folder-ul res/ conținând resursele aplicației
+	* fișierul README: acest fișier
+
+---
+
+
