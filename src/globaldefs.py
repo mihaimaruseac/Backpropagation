@@ -20,14 +20,6 @@ VAL_SUFFIX = '.val'
 VAL_PLOT_SUFFIX = '.val.png'
 LOG_SUFFIX = '.log'
 
-XXX = 800
-YYY = 600
-
 LOGNAME = 'MAIN.log'
 LOGFNAME = LOGNAME
-
-MIN_RMS = 1e-4
-MIN_DRMS = 0
-ETA = .2
-ALPHA = .5
 

@@ -22,7 +22,6 @@ class Config(object):
         self._d = gtk.Dialog(title, parent,
                 gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, btn)
         self._d.set_deletable(False)
-        self._d.set_size_request(420, 220)
         self._d.set_resizable(False)
         self._build_gui()
         self._d.show_all()
@@ -39,6 +38,9 @@ class Config(object):
         _checkHBox = gtk.HBox()
         self._build_topology_gui(_checkHBox)
         self._build_activation_gui(_checkHBox)
+        _topVBox.pack_start(_checkHBox, False, False, 5)
+        _checkHBox = gtk.HBox()
+        self._build_params_gui(_checkHBox)
         self._build_extra_gui(_checkHBox)
         _topVBox.pack_start(_checkHBox, False, False, 5)
         self._d.vbox.add(_topVBox)
@@ -66,6 +68,17 @@ class Config(object):
         _aVBox.add(self._2log)
         _aVBox.add(self._tanh)
 
+    def _build_params_gui(self, _checkHBox):
+        """
+        Builds the GUI for setting the parameters.
+        """
+        _aVBox = self._build_compund_gui_box(_checkHBox, "Parameters:")
+        self._etaCounter = self._build_counter('learning rate:', .1, 5, _aVBox, .1, 1)
+        self._alphaCounter = self._build_counter('momentum rate:', .2, .8, _aVBox, .1, 1, False)
+        self._minRmsCounter = self._build_counter('minimum error:', 0, .1, _aVBox, .01)
+        self._minRmsCounter.get_adjustment().set_value(.01)
+        self._minDeltaRmsCounter = self._build_counter('minimum delta error:', 0, .1, _aVBox, .01)
+
     def _build_extra_gui(self, _checkHBox):
         """
         Builds the GUI part for extra options.
@@ -76,6 +89,7 @@ class Config(object):
         self._minCounter.get_adjustment().set_value(-1)
         self._maxCounter.get_adjustment().set_value(1)
         self._momentum = gtk.CheckButton('Use momentum')
+        self._momentum.connect('clicked', self.__on_momentum)
         self._recurrent = gtk.CheckButton('Recurent network')
         _aVBox.add(self._momentum)
         _aVBox.add(self._recurrent)
@@ -88,12 +102,14 @@ class Config(object):
         _topVBox    VBox holding the widgets built by this function
         """
         _fileHBox = gtk.HBox()
-        _topVBox.pack_start(_fileHBox, False, False, 5)
+        _fileVBox = gtk.VBox()
+        _topVBox.pack_start(_fileVBox, False, False, 5)
         _fileLabel = gtk.Label('Input filename:')
         _fileHBox.pack_start(_fileLabel, False, False, 5)
         self._fileChoose = gtk.FileChooserButton("Select input filename")
         _fileHBox.pack_start(self._fileChoose, True, True, 5)
-        self._rCounter = self._build_counter('Max steps:', 1000, 3000, _fileHBox, 100, 0)
+        _fileVBox.pack_start(_fileHBox, False, False, 5)
+        self._rCounter = self._build_counter('Max steps:', 1000, 3000, _fileVBox, 100, 0)
 
     def _build_compund_gui_box(self, _checkHBox, frame):
         """
@@ -239,6 +255,11 @@ class Config(object):
         self._configDict['momentum'] = self._momentum.get_active()
         self._configDict['recurrent'] = self._recurrent.get_active()
 
+        self._configDict['alpha'] = self._alphaCounter.get_value()
+        self._configDict['eta'] = self._etaCounter.get_value()
+        self._configDict['min_rms'] = self._minRmsCounter.get_value()
+        self._configDict['min_delta_rms'] = self._minDeltaRmsCounter.get_value()
+
         if self._configDict['minW'] > self._configDict['maxW'] - .1:
             self._report(gtk.MESSAGE_WARNING, "Invalid interval for weights, ignored")
             self._configDict['minW'] = -1
@@ -272,4 +293,7 @@ class Config(object):
                 msg_type, gtk.BUTTONS_CLOSE, text)
         md.run()
         md.destroy()
+
+    def __on_momentum(self, widget, data=None):
+        self._alphaCounter.set_sensitive(not self._alphaCounter.get_sensitive())
 

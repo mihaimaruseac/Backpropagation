@@ -10,7 +10,6 @@ import grapher
 import normalizer
 import saver
 from units import *
-from globaldefs import *
 
 def log(x):
     """
@@ -64,7 +63,6 @@ class Network(object):
 
         config  User configuration.
         """
-        print config
         self._gui = gui
         self._parse_network(config)
         self._parse_activation(config)
@@ -97,7 +95,7 @@ class Network(object):
         Bootstraps the learning phase.
         """
         rms = self._do_one_learning_step()
-        done = rms < MIN_RMS or abs(rms - self._orms) < MIN_DRMS
+        done = rms < self._MIN_RMS or abs(rms - self._orms) < self._MIN_DRMS
         self._orms = rms
 
         self._grapher.graph()
@@ -212,6 +210,14 @@ class Network(object):
         # momentum?
         self._momentum = config['momentum']
 
+        # params
+        self._eta = config['eta']
+        self._alpha = config['alpha']
+
+        # rms params
+        self._MIN_RMS = config['min_rms']
+        self._MIN_DRMS = config['min_delta_rms']
+
     def _prepare_data(self, config):
         """
         Reads learning set, normalizing it and preparing the auxiliary lists
@@ -262,7 +268,8 @@ class Network(object):
         """
         self._hidden1 = []
         for i in range(self._h1):
-            n = Neuron(self._mW, self._MW, self._f, self._df, self._momentum, 'h1{0}'.format(i))
+            n = Neuron(self._mW, self._MW, self._f, self._df, self._momentum,
+                    'h1{0}'.format(i), self._eta, self._alpha)
             n.set_recurrent(self._recurrent)
             for inp in self._inputs:
                 n.connect(inp)
@@ -276,7 +283,8 @@ class Network(object):
         """
         self._hidden2 = []
         for i in range(self._h2):
-            n = Neuron(self._mW, self._MW, self._f, self._df, self._momentum, 'h2{0}'.format(i))
+            n = Neuron(self._mW, self._MW, self._f, self._df, self._momentum,
+                    'h2{0}'.format(i), self._eta, self._alpha)
             n.set_recurrent(self._recurrent)
             if self._h1:
                 for inp in self._hidden1:
@@ -292,7 +300,8 @@ class Network(object):
         """
         Builds the output layer and the end of the network.
         """
-        self._output = Neuron(self._mW, self._MW, self._f, self._df, self._momentum, 'o')
+        self._output = Neuron(self._mW, self._MW, self._f, self._df,
+                self._momentum, 'o', self._eta, self._alpha)
         self._output.set_recurrent(self._recurrent)
         if self._h2:
             for inp in self._hidden2:

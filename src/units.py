@@ -166,7 +166,7 @@ class Neuron(Unit):
 
     self.value() will return the output of the neuron
     """
-    def __init__(self, minW, maxW, f, df, momentum, name=''):
+    def __init__(self, minW, maxW, f, df, momentum, name, eta, alpha):
         super(Neuron, self).__init__(name, 0)
         self._min = minW
         self._max = maxW
@@ -177,6 +177,8 @@ class Neuron(Unit):
         self._momentum = momentum
         if self._momentum:
             self._ow = []
+        self._ETA = eta
+        self._ALPHA = alpha
 
     def inputs(self):
         return self._inputs
@@ -245,9 +247,9 @@ class Neuron(Unit):
 
         for i in range(len(self._weights)):
             w, inp = self._weights[i], self._inputs[i]
-            delta = ETA * self._err * self._df(self._value) * inp.value()
+            delta = self._ETA * self._err * self._df(self._value) * inp.value()
             if self._momentum:
-                delta += ETA * ALPHA * self._ow[i]
+                delta += self._ETA * self._ALPHA * self._ow[i]
                 self._ow[i] = delta
             _logger.info('Neuron {0}: delta weight{1}: {2}'.format(self._name, i, delta))
             self._weights[i] -= delta
@@ -257,9 +259,9 @@ class Neuron(Unit):
                 self._weights[i] = 1
             _logger.info('Neuron {0}: weight{1}: {2}'.format(self._name, i, self._weights[i]))
         if self._selfw:
-            delta = ETA * self._err * self._df(self._value) * self._value
+            delta = self._ETA * self._err * self._df(self._value) * self._value
             if self._momentum:
-                delta += ETA * ALPHA * self._sow
+                delta += self._ETA * self._ALPHA * self._sow
                 self._sow = delta
             _logger.info('Neuron {0}: delta self weight: {1}'.format(self._name, self._selfw))
             self._selfw -= delta
