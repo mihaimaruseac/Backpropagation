@@ -56,6 +56,9 @@ class Unit(object):
     def weights(self):
         return []
 
+    def recurrent_weight(self):
+        return None
+
     def _draw_image(self, pbuff, gc, size):
         pbuff.draw_arc(gc, False, self._x, self._y, size, size, 0, 64 * 360)
 
@@ -164,7 +167,7 @@ class Neuron(Unit):
     self.value() will return the output of the neuron
     """
     def __init__(self, minW, maxW, f, df, name=''):
-        super(Neuron, self).__init__(name, None)
+        super(Neuron, self).__init__(name, 0)
         self._min = minW
         self._max = maxW
         self._weights = []
@@ -185,12 +188,30 @@ class Neuron(Unit):
         self._inputs.append(i)
         self._weights.append(random.uniform(self._min, self._max))
 
+    def set_recurrent(self, recurrent):
+        """
+        Connects itself to itself if used in a recurrent network.
+        """
+        if recurrent:
+            self._selfw = random.uniform(self._min, self._max)
+        else:
+            self._selfw = None
+
+    def recurrent_weight(self):
+        """
+        Returns the weight of recurrent connection or None if network is not
+        recurrent.
+        """
+        return self._selfw
+
     def compute_output(self):
         """
         Computes the output of this neuron, depending on its inputs and its
         weights.
         """
         s = 0
+        if self._selfw:
+            s += self._selfw * self._value
         for (w, i) in zip(self._weights, self._inputs):
             s += w * i.value()
         self._value = self._f(s)
@@ -213,6 +234,8 @@ class Neuron(Unit):
 
         for (w, i) in zip(self._weights, self._inputs):
             i.report_error(w * self._err)
+        if self._selfw:
+            e = self._selfw * self._err
 
         for i in range(len(self._weights)):
             w, inp = self._weights[i], self._inputs[i]
@@ -224,8 +247,19 @@ class Neuron(Unit):
             if self._weights[i] > 1:
                 self._weights[i] = 1
             _logger.info('Neuron {0}: weight{1}: {2}'.format(self._name, i, self._weights[i]))
+        if self._selfw:
+            delta = ETA * self._err * self._df(self._value) * self._value
+            _logger.info('Neuron {0}: delta self weight: {1}'.format(self._name, self._selfw))
+            self._selfw -= delta
+            if self._selfw < -1:
+                self._selfw = -1
+            if self._selfw > 1:
+                self._selfw = 1
+            _logger.info('Neuron {0}: self weight: {1}'.format(self._name, self._selfw))
 
         self._err = 0
+        if self._selfw:
+            self.report_error(e)
 
     def _draw_label_text(self, l):
         l.set_text("")

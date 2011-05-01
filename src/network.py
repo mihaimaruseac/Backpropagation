@@ -64,6 +64,7 @@ class Network(object):
 
         config  User configuration.
         """
+        print config
         self._gui = gui
         self._parse_network(config)
         self._parse_activation(config)
@@ -262,6 +263,7 @@ class Network(object):
         self._hidden1 = []
         for i in range(self._h1):
             n = Neuron(self._mW, self._MW, self._f, self._df, 'h1{0}'.format(i))
+            n.set_recurrent(self._recurrent)
             for inp in self._inputs:
                 n.connect(inp)
             self._hidden1.append(n)
@@ -275,6 +277,7 @@ class Network(object):
         self._hidden2 = []
         for i in range(self._h2):
             n = Neuron(self._mW, self._MW, self._f, self._df, 'h2{0}'.format(i))
+            n.set_recurrent(self._recurrent)
             if self._h1:
                 for inp in self._hidden1:
                     n.connect(inp)
@@ -290,6 +293,7 @@ class Network(object):
         Builds the output layer and the end of the network.
         """
         self._output = Neuron(self._mW, self._MW, self._f, self._df, 'o')
+        self._output.set_recurrent(self._recurrent)
         if self._h2:
             for inp in self._hidden2:
                 self._output.connect(inp)

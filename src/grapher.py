@@ -9,6 +9,7 @@ from globaldefs import *
 
 SIZE = 40
 PAD = 80
+RPAD = 5
 
 class Grapher(object):
     """
@@ -44,15 +45,25 @@ class Grapher(object):
         for n in self._neurons:
             ex, ey = n.entry_point(SIZE)
             for (nn, w) in zip(n.inputs(), n.weights()):
-                if nn == n:
-                    # TODO: recurrent networks
-                    pass
                 if w < 0:
                     ngc.set_rgb_fg_color(gtk.gdk.Color(red=.9*abs(w)))
                 else:
                     ngc.set_rgb_fg_color(gtk.gdk.Color(blue=.9*w))
                 sx, sy = nn.exit_point(SIZE)
                 self._pixmap.draw_line(ngc, sx, sy, ex, ey)
+            rw = n.recurrent_weight()
+            if rw:
+                sx, sy = n.exit_point(SIZE)
+                if rw < 0:
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(red=.9*abs(rw)))
+                else:
+                    ngc.set_rgb_fg_color(gtk.gdk.Color(blue=.9*rw))
+                line = [(sx, sy),
+                        (sx + RPAD, sy - SIZE / 2),
+                        (sx - SIZE / 2, sy - SIZE / 2 - RPAD),
+                        (ex - RPAD, ey - SIZE / 2),
+                        (ex, ey)]
+                self._pixmap.draw_lines(ngc, line)
 
         self._img.set_from_pixmap(self._pixmap, None)
 
